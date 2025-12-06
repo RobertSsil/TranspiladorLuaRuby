@@ -20,6 +20,10 @@
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return ID; }
 
 "="             { return EQ; }
+"+"             { return PLUS; } 
+"-"             { return MINUS; } 
+"*"             { return MULT; } 
+"/"             { return DIV; } 
 "("             { return OP; }
 ")"             { return CP; }
 

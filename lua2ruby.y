@@ -12,19 +12,20 @@ extern int yylex();
     char *str;
 }
 
-// Tokens com valor semântico <str>
 %token <str> ID NUM STR
-// Tokens sem valor semântico
 %token LOCAL PRINT EQ OP CP ENDOFFILE
+%token PLUS MINUS MULT DIV
 
-// Tipos de retorno das regras
 %type <str> PROGRAM CHUNK COMMANDS COMMAND EXPRESSION PRINT_CALL
+
+%left PLUS MINUS
+%left MULT DIV
 
 %%
 
 PROGRAM: CHUNK ENDOFFILE 
     { 
-        printf("\n# Transpilação concluída (Variáveis e I/O)\n");
+        printf("\n# Transpilação concluída (Variáveis, I/O e Aritmética)\n");
         return 0;
     }
 ;
@@ -37,35 +38,74 @@ COMMANDS: COMMANDS COMMAND
     { $$ = ""; } 
 ;
 
-// --- REGRAS DE COMANDO ---
-
 COMMAND: ID EQ EXPRESSION 
     { 
         print_ident(); 
         printf("%s = %s\n", $1, $3); 
+        free($3);
     }
     | LOCAL ID EQ EXPRESSION 
     { 
         print_ident(); 
         printf("%s = %s\n", $2, $4); 
+        free($4);
     }
     | PRINT_CALL
 ;
 
-// --- REQUISITO 2: COMANDO PARA ENTRADA E SAÍDA PADRÃO ---
 PRINT_CALL: PRINT OP EXPRESSION CP 
     { 
-        // print(EXPRESSION) (Lua) -> puts EXPRESSION (Ruby)
         print_ident(); 
         printf("puts %s\n", $3); 
-        free($3); // Limpeza de memória
+        free($3);
     }
 ;
 
-// --- EXPRESSÕES (SUPORTA NUM, ID, STR) ---
-EXPRESSION: NUM { $$ = strdup($1); free($1); }
-    | ID { $$ = strdup($1); free($1); }
-    | STR { $$ = strdup($1); free($1); }
+// --- REQUISITO 3: EXPRESSÕES ARITMÉTICAS REFINADAS ---
+EXPRESSION: NUM { 
+        $$ = strdup($1); 
+        free($1); 
+    }
+    | ID { 
+        $$ = strdup($1); 
+        free($1); 
+    }
+    | STR { 
+        $$ = strdup($1); 
+        free($1); 
+    }
+    
+    | EXPRESSION PLUS EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s + %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION MINUS EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s - %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION MULT EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s * %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION DIV EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s / %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    
+    | OP EXPRESSION CP { 
+        char *temp = (char*)malloc(strlen($2) + 10);
+        sprintf(temp, "(%s)", $2);
+        $$ = temp;
+        free($2);
+    }
 ;
 
 %%
@@ -87,7 +127,6 @@ int main(int argc, char **argv){
         }
 
         if( yyparse() == 0 ) {
-            // Sucesso
         }
         
         fclose(stdout); 
