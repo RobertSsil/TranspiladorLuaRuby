@@ -16,8 +16,15 @@ extern int yylex();
 %token LOCAL PRINT EQ OP CP ENDOFFILE
 %token PLUS MINUS MULT DIV
 
+%token AND OR NOT
+%token GE LE EQCOMPARE NOTEQ GT LT
+
 %type <str> PROGRAM CHUNK COMMANDS COMMAND EXPRESSION PRINT_CALL
 
+%left AND
+%left OR
+%right NOT
+%left GT LT GE LE EQCOMPARE NOTEQ
 %left PLUS MINUS
 %left MULT DIV
 
@@ -25,7 +32,7 @@ extern int yylex();
 
 PROGRAM: CHUNK ENDOFFILE 
     { 
-        printf("\n# Transpilação concluída (Variáveis, I/O e Aritmética)\n");
+        printf("\n# Transpilação concluída (Quesitos 1 a 4)\n");
         return 0;
     }
 ;
@@ -34,19 +41,20 @@ CHUNK: COMMANDS
 ;
 
 COMMANDS: COMMANDS COMMAND
-    | /* empty */
+    |
     { $$ = ""; } 
 ;
 
 COMMAND: ID EQ EXPRESSION 
     { 
-        print_ident(); 
+        print_ident();
         printf("%s = %s\n", $1, $3); 
         free($3);
     }
-    | LOCAL ID EQ EXPRESSION 
+    |
+    LOCAL ID EQ EXPRESSION 
     { 
-        print_ident(); 
+        print_ident();
         printf("%s = %s\n", $2, $4); 
         free($4);
     }
@@ -55,24 +63,23 @@ COMMAND: ID EQ EXPRESSION
 
 PRINT_CALL: PRINT OP EXPRESSION CP 
     { 
-        print_ident(); 
+        print_ident();
         printf("puts %s\n", $3); 
         free($3);
     }
 ;
 
-// --- REQUISITO 3: EXPRESSÕES ARITMÉTICAS REFINADAS ---
 EXPRESSION: NUM { 
-        $$ = strdup($1); 
+        $$ = strdup($1);
         free($1); 
     }
     | ID { 
         $$ = strdup($1); 
-        free($1); 
+        free($1);
     }
     | STR { 
         $$ = strdup($1); 
-        free($1); 
+        free($1);
     }
     
     | EXPRESSION PLUS EXPRESSION { 
@@ -81,21 +88,80 @@ EXPRESSION: NUM {
         $$ = temp;
         free($1); free($3); 
     }
-    | EXPRESSION MINUS EXPRESSION { 
+    |
+    EXPRESSION MINUS EXPRESSION { 
         char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
         sprintf(temp, "%s - %s", $1, $3); 
         $$ = temp;
         free($1); free($3); 
     }
-    | EXPRESSION MULT EXPRESSION { 
+    |
+    EXPRESSION MULT EXPRESSION { 
         char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
         sprintf(temp, "%s * %s", $1, $3); 
         $$ = temp;
         free($1); free($3); 
     }
-    | EXPRESSION DIV EXPRESSION { 
+    |
+    EXPRESSION DIV EXPRESSION { 
         char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
         sprintf(temp, "%s / %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    
+    | EXPRESSION GT EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s > %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION LT EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s < %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION GE EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s >= %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION LE EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s <= %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION EQCOMPARE EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s == %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION NOTEQ EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s != %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    
+    | NOT EXPRESSION { 
+        char *temp = (char*)malloc(strlen($2) + 10);
+        sprintf(temp, "!%s", $2);
+        $$ = temp;
+        free($2);
+    }
+    | EXPRESSION AND EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s && %s", $1, $3); 
+        $$ = temp;
+        free($1); free($3); 
+    }
+    | EXPRESSION OR EXPRESSION { 
+        char *temp = (char*)malloc(strlen($1) + strlen($3) + 10);
+        sprintf(temp, "%s || %s", $1, $3); 
         $$ = temp;
         free($1); free($3); 
     }
@@ -129,7 +195,7 @@ int main(int argc, char **argv){
         if( yyparse() == 0 ) {
         }
         
-        fclose(stdout); 
+        fclose(stdout);
         freopen("/dev/tty", "w", stdout); 
         printf("Transpilação concluída! Verifique o arquivo output.rb\n");
 
