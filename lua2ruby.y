@@ -8,183 +8,155 @@ int yylex();
 int yyerror(const char *s);
 %}
 
-%union {
-    char *str;
-}
+%union { char *str; }
 
-/* Tokens */
-%token <str> ID NUM STR BOOL
-%token LOCAL PRINT
+/* TOKENS */
+%token <str> ID NUM STR
+%token LOCAL PRINT READ
 %token IF THEN ELSE ELSEIF END
-%token AND OR NOT CONCAT
+%token WHILE DO
+%token FUNCTION RETURN
+%token AND OR NOT
+%token CONCAT
 %token GE LE EQCOMPARE NOTEQ GT LT
-%token EQ PLUS MINUS MULT DIV
-%token OP CP
+%token ASSIGN PLUS MINUS MULT DIV MOD
+%token OP CP COMMA
+%token OCUR CCUR COLON
+%token TRUE FALSE NIL
 %token ENDOFFILE
 
-/* Tipos não-terminais */
-%type <str> program chunk statement
-%type <str> expr var_decl assignment print_stmt
-%type <str> if_stmt elseif_clauses else_clause block
+%type <str> program statements_optional statements_list statement
+%type <str> expr var_decl assignment print_stmt input_stmt
+%type <str> if_stmt elseif_clauses else_clause
+%type <str> while_loop func_decl func_call arg_list param_list
+%type <str> table_decl table_body table_item
 
-/* Precedência */
 %left OR
 %left AND
 %left EQCOMPARE NOTEQ
 %left GT LT GE LE
 %left PLUS MINUS
-%left MULT DIV
+%left MULT DIV MOD
 %left CONCAT
 %right NOT
 %nonassoc UMINUS
+%nonassoc THEN
+%nonassoc ELSE
 
 %%
 
-program: chunk ENDOFFILE {
-    fprintf(stderr, "\n Transpilação concluída com sucesso!\n");
-    return 0;
-}
+program:
+    statements_optional ENDOFFILE {
+        fprintf(stderr, "\nTranspilação concluída com sucesso!\n");
+        return 0;
+    }
 ;
 
-chunk: 
-    | chunk statement
+statements_optional:
+      { $$ = strdup(""); }
+    | statements_list { $$ = $1; }
 ;
 
-statement: var_decl
+statements_list:
+      statement { /* $$ = $1;  Não é necessário, pois o print_ident() já imprime. */ }
+    | statements_list statement { /* $$ = $1; */ }
+;
+
+statement:
+      var_decl
     | assignment
     | print_stmt
+    | input_stmt
     | if_stmt
-    | error '\n' { yyerrok; }
+    | while_loop
+    | func_decl
+    | func_call { free($1); } /* func_call precisa liberar a string alocada para $$ */
+    | RETURN expr {
+        print_ident();
+        printf("return %s\n", $2);
+        free($2);
+    }
 ;
 
-/* 1. DECLARAÇÃO/ATRIBUIÇÃO DE VARIÁVEIS */
-var_decl: LOCAL ID EQ expr {
-    print_ident();
-    printf("%s = %s\n", $2, $4);
-    free($2); free($4);
-}
-| LOCAL ID {
-    print_ident();
-    printf("%s = nil\n", $2);
-    free($2);
-}
+var_decl:
+      LOCAL ID ASSIGN expr {
+        print_ident();
+        printf("%s = %s\n", $2, $4);
+        free($2); free($4);
+      }
+    | LOCAL ID {
+        print_ident();
+        printf("%s = nil\n", $2);
+        free($2);
+      }
 ;
 
-assignment: ID EQ expr {
-    print_ident();
-    printf("%s = %s\n", $1, $3);
-    free($1); free($3);
-}
+assignment:
+      ID ASSIGN expr {
+        print_ident();
+        printf("%s = %s\n", $1, $3);
+        free($1); free($3);
+      }
 ;
 
-/* 2. ENTRADA/SAÍDA */
-print_stmt: PRINT OP expr CP {
-    print_ident();
-    printf("puts %s\n", $3);
-    free($3);
-}
-| PRINT expr {
-    print_ident();
-    printf("puts %s\n", $2);
-    free($2);
-}
+input_stmt:
+      ID ASSIGN READ OP CP {
+        print_ident();
+        printf("%s = gets.chomp.to_i\n", $1);
+        free($1);
+      }
 ;
 
-/* 3. & 4. EXPRESSÕES ARITMÉTICAS, LÓGICAS E CONCATENAÇÃO */
-expr: NUM { $$ = strdup($1); free($1); }
+print_stmt:
+      PRINT OP arg_list CP {
+        print_ident();
+        printf("puts %s\n", $3);
+        free($3);
+      }
+    | PRINT arg_list {
+        print_ident();
+        printf("puts %s\n", $2);
+        free($2);
+      }
+;
+
+expr:
+      NUM { $$ = strdup($1); free($1); }
     | STR { $$ = strdup($1); free($1); }
-    | BOOL { $$ = strdup($1); free($1); }
+    | TRUE { $$ = strdup("true"); }
+    | FALSE { $$ = strdup("false"); }
+    | NIL { $$ = strdup("nil"); }
     | ID { $$ = strdup($1); free($1); }
-    | expr PLUS expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s + %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr MINUS expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s - %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr MULT expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s * %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr DIV expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s / %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr CONCAT expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s + %s", $1, $3);
-        free($1); free($3);
-    }
-    | MINUS expr %prec UMINUS {
-        $$ = malloc(strlen($2) + 2);
-        sprintf($$, "-%s", $2);
-        free($2);
-    }
-    | expr AND expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s && %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr OR expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s || %s", $1, $3);
-        free($1); free($3);
-    }
-    | NOT expr {
-        $$ = malloc(strlen($2) + 2);
-        sprintf($$, "!%s", $2);
-        free($2);
-    }
-    | expr GT expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s > %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr LT expr {
-        $$ = malloc(strlen($1) + strlen($3) + 4);
-        sprintf($$, "%s < %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr GE expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s >= %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr LE expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s <= %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr EQCOMPARE expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s == %s", $1, $3);
-        free($1); free($3);
-    }
-    | expr NOTEQ expr {
-        $$ = malloc(strlen($1) + strlen($3) + 5);
-        sprintf($$, "%s != %s", $1, $3);
-        free($1); free($3);
-    }
-    | OP expr CP {
-        $$ = malloc(strlen($2) + 3);
-        sprintf($$, "(%s)", $2);
-        free($2);
-    }
+    | func_call { $$ = $1; }
+    | table_decl { $$ = $1; }
+    | expr PLUS expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s + %s", $1,$3); free($1);free($3); }
+    | expr MINUS expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s - %s", $1,$3); free($1);free($3); }
+    | expr MULT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s * %s", $1,$3); free($1);free($3); }
+    | expr DIV expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s / %s", $1,$3); free($1);free($3); }
+    | expr MOD expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s %% %s", $1,$3); free($1);free($3); }
+    | expr CONCAT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s + %s", $1,$3); free($1);free($3); }
+    | MINUS expr %prec UMINUS { $$=malloc(strlen($2)+2); sprintf($$, "-%s", $2); free($2); }
+    | expr AND expr { $$=malloc(strlen($1)+strlen($3)+6); sprintf($$, "%s && %s", $1,$3); free($1);free($3); }
+    | expr OR expr { $$=malloc(strlen($1)+strlen($3)+6); sprintf($$, "%s || %s", $1,$3); free($1);free($3); }
+    | NOT expr { $$=malloc(strlen($2)+2); sprintf($$, "!%s", $2); free($2); }
+    | expr GT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s > %s", $1,$3); free($1);free($3); }
+    | expr LT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s < %s", $1,$3); free($1);free($3); }
+    | expr GE expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s >= %s", $1,$3); free($1);free($3); }
+    | expr LE expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s <= %s", $1,$3); free($1);free($3); }
+    | expr EQCOMPARE expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s == %s", $1,$3); free($1);free($3); }
+    | expr NOTEQ expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s != %s", $1,$3); free($1);free($3); }
+    | OP expr CP { $$=malloc(strlen($2)+3); sprintf($$, "(%s)", $2); free($2); }
 ;
 
-/* 5. COMANDOS CONDICIONAIS */
-if_stmt: IF expr THEN {
+/* IF */
+if_stmt:
+    IF expr THEN {
         print_ident();
         printf("if %s\n", $2);
         free($2);
         ident_level++;
     }
-    block
+    statements_optional
     elseif_clauses
     else_clause
     END {
@@ -194,65 +166,112 @@ if_stmt: IF expr THEN {
     }
 ;
 
-elseif_clauses: 
+elseif_clauses:
+      { }
     | elseif_clauses ELSEIF expr THEN {
         ident_level--;
         print_ident();
         printf("elsif %s\n", $3);
         free($3);
         ident_level++;
-    }
-    block
+      }
+      statements_optional
 ;
 
-else_clause: 
+else_clause:
+      { $$ = strdup(""); }
     | ELSE {
         ident_level--;
         print_ident();
         printf("else\n");
         ident_level++;
-    }
-    block
+      }
+      statements_optional { $$ = strdup(""); } 
 ;
 
-/* BLOCO DE CÓDIGO */
-block: 
-    | block statement
+/* WHILE */
+while_loop:
+    WHILE expr DO {
+        print_ident();
+        printf("while %s\n", $2);
+        free($2);
+        ident_level++;
+    }
+    statements_optional
+    END {
+        ident_level--;
+        print_ident();
+        printf("end\n");
+    }
+;
+
+/* FUNÇÕES */
+func_decl:
+    FUNCTION ID OP param_list CP {
+        print_ident();
+        printf("def %s(%s)\n", $2, $4);
+        free($2); free($4);
+        ident_level++;
+    }
+    statements_optional
+    END {
+        ident_level--;
+        print_ident();
+        printf("end\n");
+    }
+;
+
+param_list:
+      { $$=strdup(""); }
+    | ID { $$=strdup($1); free($1); }
+    | param_list COMMA ID {
+        $$=malloc(strlen($1)+strlen($3)+3);
+        sprintf($$, "%s, %s", $1, $3);
+        free($1); free($3);
+    }
+;
+
+/* CALLS */
+func_call:
+    ID OP arg_list CP {
+        $$=malloc(strlen($1)+strlen($3)+3);
+        sprintf($$, "%s(%s)", $1, $3);
+        free($1); free($3);
+    }
+;
+
+arg_list:
+      { $$=strdup(""); }
+    | expr { $$=strdup($1); free($1); }
+    | arg_list COMMA expr {
+        $$=malloc(strlen($1)+strlen($3)+3);
+        sprintf($$, "%s, %s", $1, $3);
+        free($1); free($3);
+    }
+;
+
+/* TABLE */
+table_decl:
+    OCUR table_body CCUR {
+        $$=strdup("nil");
+    }
+;
+
+table_body:
+      { $$=strdup(""); }
+    | table_body table_item { $$=strdup(""); }
+    | table_body COMMA table_item { $$=strdup(""); }
+;
+
+table_item:
+      ID ASSIGN expr { free($1); free($3); $$=strdup(""); }
+    | expr { free($1); $$=strdup(""); }
 ;
 
 %%
-
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Uso: %s arquivo.lua\n", argv[0]);
-        return 1;
-    }
-    
     yyin = fopen(argv[1], "r");
-    if (!yyin) {
-        fprintf(stderr, "Erro: Não foi possível abrir %s\n", argv[1]);
-        return 1;
-    }
-    
-    if (freopen("output.rb", "w", stdout) == NULL) {
-        fprintf(stderr, "Erro ao criar output.rb\n");
-        fclose(yyin);
-        return 1;
-    }
-    
-    fprintf(stderr, "Transpilando Lua → Ruby...\n");
-    
-    if (yyparse() == 0) {
-        fprintf(stderr, "Arquivo 'output.rb' gerado com sucesso!\n");
-    } else {
-        fprintf(stderr, " Transpilação falhou\n");
-    }
-    
-    fclose(stdout);
-    fclose(yyin);
-    
-    // Restaura stdout
-    freopen("/dev/tty", "w", stdout);
-    
+    freopen("output.rb", "w", stdout);
+    yyparse();
     return 0;
 }
