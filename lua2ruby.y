@@ -157,6 +157,7 @@ expr:
     | expr EQCOMPARE expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s == %s", $1,$3); free($1);free($3); }
     | expr NOTEQ expr { $$=malloc(strlen($1)+strlen($3)+5); sprintf($$, "%s != %s", $1,$3); free($1);free($3); }
     | OP expr CP { $$=malloc(strlen($2)+3); sprintf($$, "(%s)", $2); free($2); }
+    
 ;
 
 /* IF */
