@@ -1,14 +1,13 @@
-## **Projeto Final — Transpilador Lua → Ruby — 3ª Avaliação**
+## **Transpilador Lua → Ruby — 3ª Avaliação**
 
-Projeto Final da Disciplina de Compiladores  
-3ª Avaliação
+Projeto final da disciplina de Compiladores e Paradigmas de Programação 3ª Avaliação
 
 **Autores:** Alicia Monteiro, Eduardo Couto, Kleiton Josivan, João Vitor Fernandes e Robert Danilo  
 **Data:** 13/12/2025  
 
 ---
 
-## 1. Descrição do Projeto
+## 1. Descrição do projeto
 
 Este projeto consiste no desenvolvimento de um **transpilador**, uma ferramenta responsável por converter código-fonte escrito em uma linguagem de programação para outra.
 
@@ -18,7 +17,7 @@ A implementação utiliza uma **abordagem ascendente**, fazendo uso das ferramen
 
 ---
 
-## 2. Linguagens Utilizadas
+## 2. Linguagens utilizadas
 
 - **Linguagem de origem:** Lua  
 - **Linguagem de destino:** Ruby  
@@ -27,12 +26,12 @@ A escolha do par Lua → Ruby se justifica pela similaridade conceitual entre as
 
 ---
 
-## 3. Requisitos do Sistema
+## 3. Requisitos do sistema
 
 ### Sistema Operacional
 - Distribuições Linux baseadas em Debian/Ubuntu (Ubuntu 20.04 ou superior recomendado)
 
-### Ferramentas Necessárias
+### Ferramentas necessárias
 
 | Ferramenta | Versão Recomendada |
 |-----------|-------------------|
@@ -44,7 +43,7 @@ A escolha do par Lua → Ruby se justifica pela similaridade conceitual entre as
 
 ---
 
-## 4. Instalação das Dependências
+## 4. Instalação das dependências
 
 ```bash
 sudo apt-get update
@@ -62,7 +61,7 @@ ruby --version
 
 ---
 
-## 5. Clonando o Repositório
+## 5. Clonando o repositório
 
 ```bash
 git clone https://github.com/RobertSsil/TranspiladorLuaRuby
@@ -71,7 +70,7 @@ cd TranspiladorLuaRuby-main
 
 ---
 
-## 6. Estrutura do Projeto
+## 6. Estrutura do projeto
 
 ```text
 TranspiladorLuaRuby/
@@ -85,7 +84,7 @@ TranspiladorLuaRuby/
 
 ---
 
-## 7. Compilação do Transpilador
+## 7. Compilação do transpilador
 
 ```bash
 bison -d lua2ruby.y
@@ -95,7 +94,7 @@ gcc lua2ruby.tab.c lex.yy.c aux_funcs.c -o transpilador
 
 ---
 
-## 8. Execução do Transpilador
+## 8. Execução do transpilador
 
 ```bash
 ./transpilador input.lua
@@ -109,7 +108,7 @@ output.rb
 
 ---
 
-## 9. Execução do Código Ruby Gerado
+## 9. Execução do código Ruby gerado
 
 ```bash
 ruby output.rb
@@ -117,7 +116,7 @@ ruby output.rb
 
 ---
 
-## 10. Funcionalidades Suportadas
+## 10. Funcionalidades suportadas
 
 - Declaração e atribuição de variáveis  
 - Entrada e saída padrão  
@@ -129,7 +128,7 @@ ruby output.rb
 
 ---
 
-## 11. Limitações Conhecidas
+## 11. Limitações conhecidas
 
 - Não suporta laço `for`
 - Não suporta tabelas Lua
@@ -139,7 +138,7 @@ ruby output.rb
 
 ---
 
-## 12. Observações Finais
+## 12. Observações finais
 
 Este projeto cumpre todos os requisitos mínimos definidos no enunciado do trabalho, demonstrando a aplicação prática dos conceitos de compiladores.
 
