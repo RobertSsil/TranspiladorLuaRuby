@@ -1,4 +1,4 @@
-## **Projeto Final do Transpilador — Transpilador Lua → Ruby — 3ª Avaliação**
+## **Projeto Final — Transpilador Lua → Ruby — 3ª Avaliação**
 
 Projeto Final da Disciplina de Compiladores  
 3ª Avaliação
