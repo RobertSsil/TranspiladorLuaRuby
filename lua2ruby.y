@@ -100,7 +100,12 @@ assignment:
 ;
 
 input_stmt:
-      ID ASSIGN READ OP CP {
+      LOCAL ID ASSIGN READ OP CP { 
+        print_ident();
+        printf("%s = gets.chomp.to_i\n", $2);
+        free($2);
+      }
+    | ID ASSIGN READ OP CP { 
         print_ident();
         printf("%s = gets.chomp.to_i\n", $1);
         free($1);
@@ -134,7 +139,13 @@ expr:
     | expr MULT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s * %s", $1,$3); free($1);free($3); }
     | expr DIV expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s / %s", $1,$3); free($1);free($3); }
     | expr MOD expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s %% %s", $1,$3); free($1);free($3); }
-    | expr CONCAT expr { $$=malloc(strlen($1)+strlen($3)+4); sprintf($$, "%s + %s", $1,$3); free($1);free($3); }
+   | expr CONCAT expr {
+    // Aloca espaço para (operando1) + (operando2.to_s)
+    $$=malloc(strlen($1)+strlen($3)+8); 
+    // Garante que o segundo operando seja sempre uma string (usando .to_s)
+    sprintf($$, "%s + %s.to_s", $1,$3); 
+    free($1);free($3);
+}
     | MINUS expr %prec UMINUS { $$=malloc(strlen($2)+2); sprintf($$, "-%s", $2); free($2); }
     | expr AND expr { $$=malloc(strlen($1)+strlen($3)+6); sprintf($$, "%s && %s", $1,$3); free($1);free($3); }
     | expr OR expr { $$=malloc(strlen($1)+strlen($3)+6); sprintf($$, "%s || %s", $1,$3); free($1);free($3); }
