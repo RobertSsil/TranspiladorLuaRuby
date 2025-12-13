@@ -6,6 +6,8 @@
 </div>
 
 <div align="center">
+  <br>
+  <img src="src/luaruby.png" alt="LuaRuby" width="200">
   <h1>Transpilador de Lua para Ruby - Um projeto para a disciplina de <strong>Compiladores e Paradigmas de Programação</strong></p>
 </div>
 
