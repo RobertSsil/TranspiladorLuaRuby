@@ -6,7 +6,7 @@
 </div>
 
 <div align="center">
-  <h1>Transpilador Lua para Ruby - Um projeto para a disciplina de <strong>Compiladores e Paradigmas de Programação</strong>.</p>
+  <h1>Transpilador de Lua para Ruby - Um projeto para a disciplina de <strong>Compiladores e Paradigmas de Programação</strong></p>
 </div>
 
 Projeto final da disciplina de Compiladores e Paradigmas de Programação 3ª Avaliação
