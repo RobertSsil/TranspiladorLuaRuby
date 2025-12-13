@@ -1,4 +1,13 @@
-## **Transpilador Lua → Ruby — 3ª Avaliação**
+<div align="center">
+  <img src="https://img.shields.io/badge/STATUS-COMPLETO-brightgreen?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/LANGUAGE-LUA-blue?style=for-the-badge&logo=lua" alt="Language Lua">
+  <img src="https://img.shields.io/badge/LANGUAGE-RUBY-red?style=for-the-badge&logo=ruby" alt="Language Ruby">
+  <img src="https://img.shields.io/badge/LICENSE-EDUCACIONAL-red?style=for-the-badge" alt="License">
+</div>
+
+<div align="center">
+  <h1>Transpilador Lua para Ruby - Um projeto para a disciplina de <strong>Compiladores e Paradigmas da Computação</strong>.</p>
+</div>
 
 Projeto final da disciplina de Compiladores e Paradigmas de Programação 3ª Avaliação
 
